@@ -7,7 +7,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.0.1'
-        classpath 'com.hujiang.aspectjx:gradle-android-plugin-aspectjx:2.0.0'
+        classpath 'com.hujiang.aspectjx:gradle-android-plugin-aspectjx:2.0.1'
 //        classpath 'org.aspectj:aspectjtools:1.8.13'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.novoda:bintray-release:0.8.1'
@@ -37,7 +37,7 @@ task clean(type: Delete) {
 ext {
     userOrg = 'ganyao114'
     groupId = 'com.trend.lazyinject'
-    publishVersion = '0.0.6-beta'
+    publishVersion = '2.0.0-beta'
     desc = 'lazy inject framework for android'
     website = 'https://github.com/ganyao114/lazyInject'
     licences = ['Apache-2.0']

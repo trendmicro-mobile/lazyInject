@@ -1,7 +1,10 @@
 package com.trend.lazyinject.lib;
 
+import android.content.Context;
+
 import com.trend.lazyinject.lib.component.ComponentBuilder;
 import com.trend.lazyinject.lib.component.ComponentManager;
+import com.trend.lazyinject.lib.di.DIImpl;
 import com.trend.lazyinject.lib.log.LOG;
 import com.trend.lazyinject.lib.log.MethodMonitor;
 
@@ -10,6 +13,16 @@ import com.trend.lazyinject.lib.log.MethodMonitor;
  */
 
 public class LazyInject {
+
+    static Context context;
+
+    public static void init(Context context) {
+        LazyInject.context = context;
+    }
+
+    public static Context context() {
+        return context;
+    }
 
     public static void addBuildMap(Class... maps) {
         for (Class map:maps) {
@@ -22,14 +35,14 @@ public class LazyInject {
     }
 
     public static void inject(Object target, Object... components) {
-        ComponentManager.inject(target, components);
+        DIImpl.inject(target, components);
     }
 
     public static void inject(Object target, boolean nest) {
         if (nest) {
-            ComponentManager.injectNest(target);
+            DIImpl.injectNest(target);
         } else {
-            ComponentManager.inject(target);
+            DIImpl.inject(target);
         }
     }
 

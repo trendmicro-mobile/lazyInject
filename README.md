@@ -13,7 +13,7 @@ buildscript {
     dependencies {
         ...
         //此依赖用于实现 AspectJ,如有其他合适项目可以自行替换，现由 https://github.com/HujiangTechnology/gradle_plugin_android_aspectjx 实现
-        classpath 'com.hujiang.aspectjx:gradle-android-plugin-aspectjx:2.0.0'
+        classpath 'com.hujiang.aspectjx:gradle-android-plugin-aspectjx:2.0.1'
         ...
     }
 }  
@@ -37,10 +37,10 @@ app 或者 lib/build.gradle
 apply plugin: 'android-aspectjx'
 
 dependencies {
-    compile 'com.trend.lazyinject:lib:0.0.6-beta'
-    annotationProcessor 'com.trend.lazyinject:compiler:0.0.6-beta'
+    compile 'com.trend.lazyinject:lib:1.0.0'
+    annotationProcessor 'com.trend.lazyinject:compiler:1.0.0'
     //如果使用 kotlin
-    compile 'com.trend.lazyinject:kotlinsupport:0.0.6-beta'
+    compile 'com.trend.lazyinject:kotlinsupport:1.0.0'
 }
 
 ```  
@@ -86,7 +86,7 @@ public interface TestComponent {
     ArrayList<Integer> provide2();
     @Provide
     ArrayList<? extends BaseModel> provide3();
-    @Provide
+    @Provide(singleton = true)
     ModelA provide4();
     @Provide
     Map<String,BaseModel> provide5();
@@ -94,7 +94,7 @@ public interface TestComponent {
     Map<String, ? extends ModelA> provide6();
 }
 ```
-&nbsp;&nbsp;打上 @Provide 注解的方法将被暴露为依赖的提供者，注意 LazyInject 和 Dagger2 不同的是没有实现 Scope 管理，注入元素需要在 Component 的实现类中自行管理。简单理解为每次注入都会调用对应的 provide 方法。
+&nbsp;&nbsp;打上 @Provide 注解的方法将被暴露为依赖的提供者，每个 provide 方法可单独配置为 singleton
 ### Component 实现
 ```java
 @ComponentImpl
@@ -125,8 +125,7 @@ public class TestComponentImpl implements TestComponent {
     }
 }
 ```
-```java
-@Retention(RetentionPolicy.RUNTIME)
+```java@Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PACKAGE, ElementType.TYPE})
 public @interface ComponentImpl {
     String component() default "";
@@ -168,8 +167,8 @@ public class DemoApplication extends Application {
 ```
 &nbsp;&nbsp;当然也可以模仿这个手动编写
 ## 注入
-### 主动注入
-&nbsp;&nbsp;主动注入的原理是利用 AspectJ 编译时 hook field get 操作。所以注入是被动的。  
+### 被动注入
+&nbsp;&nbsp;被动注入的原理是利用 AspectJ 编译时 hook field get 操作。所以注入是被动的。  
 &nbsp;&nbsp;除了加上 @Inject 注解并不需要做其他操作。
 #### @Inject
 ```java
@@ -314,6 +313,19 @@ public class LoginActivity extends AppCompatActivity implements LoginMVP.View {
 &nbsp;&nbsp;主动注入不需要开启 AspectJ  
 &nbsp;&nbsp;区别在于需要用户手动调用 LazyInject.inject(this);  
 &nbsp;&nbsp;不支持 alwaysRefresh
+
+### Provider 方法参数依赖注入
+&nbsp;&nbsp;类似 Dagger Provider 方法可以带待注入的参数
+1. 如果不在参数列表上加 Inject 注解，则默认会在本模块中搜索合适的依赖
+2. 加上 Inject 或者 InjectComponent 则会注入对应模块的依赖，参考上面 Field 注入写法
+3. 搜索不到则为 Null，String 类型参数可从注解传入
+
+```java
+    @Provide
+    ModelA provide4(Map<String,BaseModel> strings,String test ,@InjectComponent TestComponent testComponent);
+```
+
+
 ### Kotlin Support
 #### 使用 Kotlin 特性动态代理
 ```kotlin
@@ -348,8 +360,26 @@ android {
 &nbsp;&nbsp;打开将显示 log  
 ```java
 LazyInject.setDebug(true);
-```  
+```
 
+## 实验性功能
+### 在子进程实现 Component
+依赖 2.0.0-beta 版本可以使用此 Feature
+代码在 multi_process 分支
+```java
+@ComponentImpl(process = "com.trend.lazyinject.demo.p1")
+public class TestComponentImpl implements TestComponent {
+    ...
+}
+```
+需要在 Manifest 中为子进程注册一个 StubProvider, authorities 必须与子进程名相同。注意不要 exported, 否则会有安全风险
+```xml
+<provider
+      android:authorities="com.trend.lazyinject.demo.p1"
+      android:name="com.trend.lazyinject.lib.ipc.InjectIPCProvider"
+      android:process="com.trend.lazyinject.demo.p1" />
+```
+因为需要 IPC，所以所有 Provider 方法的参数和返回值必须继承自 Serializable, 暂时不支持 Parcelable
 # 实现原理  
 [Design Document](https://github.com/ganyao114/lazyInject/blob/master/doc/di_design.md)
 

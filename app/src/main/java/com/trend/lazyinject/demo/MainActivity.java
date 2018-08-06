@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     public static TestComponent testComponent;
     @Inject(component = TestComponent.class)
     List<String> strings;
-    @Inject(component = TestComponent.class)
+    @Inject(component = TestComponent.class, args = {"test"}, alwaysRefresh = true)
     BaseModel baseModel;
     @Inject(component = TestComponent.class)
     Map<String, ? extends Collection> map;
@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (baseModel != null) {
             Log.d("test", "BaseModel inject success = " + baseModel.toString());
+            Log.d("test", "BaseModel inject success = " + baseModel.toString());
         }
         if (map != null) {
             Log.d("test", "Map<String,ModelA> inject success = " + map.toString());
@@ -60,5 +61,6 @@ public class MainActivity extends AppCompatActivity {
             nullProtectTestA2.test1();
             nullProtectTestA2.test2("....");
         }
+        Log.d("test", "BaseModel invoke success = " + testComponent.provide4(null, null));
     }
 }
